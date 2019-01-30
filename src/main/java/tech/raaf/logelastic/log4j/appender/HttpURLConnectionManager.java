@@ -23,7 +23,9 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -45,14 +47,14 @@ public class HttpURLConnectionManager extends HttpManager {
     private final String method;
     private final int connectTimeoutMillis;
     private final int readTimeoutMillis;
-    private final Property[] headers;
+    private final Property[] properties;
     private final SslConfiguration sslConfiguration;
     private final boolean verifyHostname;
 
     public HttpURLConnectionManager(final Configuration configuration, final LoggerContext loggerContext, final String name,
                                     final URL url, final String method, final int connectTimeoutMillis,
                                     final int readTimeoutMillis,
-                                    final Property[] headers,
+                                    final Property[] properties,
                                     final SslConfiguration sslConfiguration,
                                     final boolean verifyHostname) {
         super(configuration, loggerContext, name);
@@ -64,7 +66,7 @@ public class HttpURLConnectionManager extends HttpManager {
         this.method = Objects.requireNonNull(method, "method");
         this.connectTimeoutMillis = connectTimeoutMillis;
         this.readTimeoutMillis = readTimeoutMillis;
-        this.headers = headers != null ? headers : new Property[0];
+        this.properties = properties != null ? properties : new Property[0];
         this.sslConfiguration = sslConfiguration;
         if (this.sslConfiguration != null && !isHttps) {
             throw new ConfigurationException("SSL configuration can only be specified with URL scheme https");
@@ -74,12 +76,14 @@ public class HttpURLConnectionManager extends HttpManager {
 
     @Override
     public void startup() {
-        //TODO: Check if target host is accessible, set flag if so, check for index, create if non-existing.
-        System.out.println("I would talk to: " + url);
+        // Check if target host is accessible
+        // If yes continue, else set disabled boolean
+        // Check for index using HEAD
+        // Create index with mapping if non-existing, using PUT
+        // If index creation successful continue, else set disabled boolean
     }
     
-    @Override
-    public void send(final Layout<?> layout, final LogEvent event) throws IOException {
+    public void httpConnect(String method, Property[] headers, byte[] body) throws IOException {
         final HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
         urlConnection.setAllowUserInteraction(false);
         urlConnection.setDoOutput(true);
@@ -91,14 +95,13 @@ public class HttpURLConnectionManager extends HttpManager {
         if (readTimeoutMillis > 0) {
             urlConnection.setReadTimeout(readTimeoutMillis);
         }
-        if (layout.getContentType() != null) {
-            urlConnection.setRequestProperty("Content-Type", layout.getContentType());
-        }
+        
         for (final Property header : headers) {
             urlConnection.setRequestProperty(
-                header.getName(),
-                header.isValueNeedsLookup() ? getConfiguration().getStrSubstitutor().replace(event, header.getValue()) : header.getValue());
+                    header.getName(),
+                    header.getValue());
         }
+        
         if (sslConfiguration != null) {
             ((HttpsURLConnection)urlConnection).setSSLSocketFactory(sslConfiguration.getSslSocketFactory());
         }
@@ -106,11 +109,10 @@ public class HttpURLConnectionManager extends HttpManager {
             ((HttpsURLConnection)urlConnection).setHostnameVerifier(LaxHostnameVerifier.INSTANCE);
         }
 
-        final byte[] msg = layout.toByteArray(event);
-        urlConnection.setFixedLengthStreamingMode(msg.length);
+        urlConnection.setFixedLengthStreamingMode(body.length);
         urlConnection.connect();
         try (OutputStream os = urlConnection.getOutputStream()) {
-            os.write(msg);
+            os.write(body);
         }
 
         final byte[] buffer = new byte[1024];
@@ -139,6 +141,28 @@ public class HttpURLConnectionManager extends HttpManager {
                 throw e;
             }
         }
+    }
+    
+    @Override
+    public void send(final Layout<?> layout, final LogEvent event) throws IOException {
+        
+        Set<Property> headers = new HashSet<>();
+        
+        // Get the content type from the layout if possible.
+        if (layout.getContentType() != null) {
+            headers.add(Property.createProperty(
+                    "Content-Type", 
+                    layout.getContentType()));
+        }
+        
+        // Get the passed properties and do string substitution on any things like $${java:runtime}.
+        for (final Property property : properties) {
+            headers.add(Property.createProperty(
+                    property.getName(), 
+                    property.isValueNeedsLookup() ? getConfiguration().getStrSubstitutor().replace(event, property.getValue()) : property.getValue()));
+        }
+        
+        httpConnect(method, headers.toArray(new Property[headers.size()]), layout.toByteArray(event));
     }
 
 }
