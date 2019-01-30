@@ -1,0 +1,38 @@
+{
+    "mappings": {
+        "_doc": {
+            "properties": {
+                "contextMap": {
+                    "type": "object"
+                },
+                "endOfBatch": {
+                    "type": "boolean"
+                },
+                "level": {
+                    "type": "text"
+                },
+                "loggerFqcn": {
+                    "type": "text"
+                },
+                "loggerName": {
+                    "type": "text"
+                },
+                "message": {
+                    "type": "text"
+                },
+                "thread": {
+                    "type": "text"
+                },
+                "threadId": {
+                    "type": "long"
+                },
+                "threadPriority": {
+                    "type": "long"
+                },
+                "timeMillis": {
+                    "type": "date"
+                }
+            }
+        }
+    }
+}
