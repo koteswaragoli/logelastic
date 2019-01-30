@@ -83,7 +83,7 @@ public class HttpURLConnectionManager extends HttpManager {
         // If index creation successful continue, else set disabled boolean
     }
     
-    public void httpConnect(String method, Property[] headers, byte[] body) throws IOException {
+    public void httpConnect(String method, Set<Property> headers, byte[] body) throws IOException {
         final HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
         urlConnection.setAllowUserInteraction(false);
         urlConnection.setDoOutput(true);
@@ -162,7 +162,7 @@ public class HttpURLConnectionManager extends HttpManager {
                     property.isValueNeedsLookup() ? getConfiguration().getStrSubstitutor().replace(event, property.getValue()) : property.getValue()));
         }
         
-        httpConnect(method, headers.toArray(new Property[headers.size()]), layout.toByteArray(event));
+        httpConnect(method, headers, layout.toByteArray(event));
     }
 
 }
