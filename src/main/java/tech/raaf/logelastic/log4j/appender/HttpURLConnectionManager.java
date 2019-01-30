@@ -82,8 +82,31 @@ public class HttpURLConnectionManager extends HttpManager {
         // Create index with mapping if non-existing, using PUT
         // If index creation successful continue, else set disabled boolean
     }
-    
-    public void httpConnect(String method, Set<Property> headers, byte[] body) throws IOException {
+
+    @Override
+    public void send(final Layout<?> layout, final LogEvent event) throws IOException {
+
+        Set<Property> headers = new HashSet<>();
+
+        // Get the content type from the layout if possible.
+        if (layout.getContentType() != null) {
+            headers.add(Property.createProperty(
+                    "Content-Type",
+                    layout.getContentType()));
+        }
+
+        // Get the passed properties and do string substitution on any things like $${java:runtime}.
+        for (final Property property : properties) {
+            headers.add(Property.createProperty(
+                    property.getName(),
+                    property.isValueNeedsLookup() ? getConfiguration().getStrSubstitutor().replace(event, property.getValue()) : property.getValue()));
+        }
+
+        httpConnect(method, headers, layout.toByteArray(event));
+    }
+
+
+    private void httpConnect(String method, Set<Property> headers, byte[] body) throws IOException {
         final HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
         urlConnection.setAllowUserInteraction(false);
         urlConnection.setDoOutput(true);
@@ -142,27 +165,4 @@ public class HttpURLConnectionManager extends HttpManager {
             }
         }
     }
-    
-    @Override
-    public void send(final Layout<?> layout, final LogEvent event) throws IOException {
-        
-        Set<Property> headers = new HashSet<>();
-        
-        // Get the content type from the layout if possible.
-        if (layout.getContentType() != null) {
-            headers.add(Property.createProperty(
-                    "Content-Type", 
-                    layout.getContentType()));
-        }
-        
-        // Get the passed properties and do string substitution on any things like $${java:runtime}.
-        for (final Property property : properties) {
-            headers.add(Property.createProperty(
-                    property.getName(), 
-                    property.isValueNeedsLookup() ? getConfiguration().getStrSubstitutor().replace(event, property.getValue()) : property.getValue()));
-        }
-        
-        httpConnect(method, headers, layout.toByteArray(event));
-    }
-
 }
