@@ -73,6 +73,12 @@ public class HttpURLConnectionManager extends HttpManager {
     }
 
     @Override
+    public void startup() {
+        //TODO: Check if target host is accessible, set flag if so, check for index, create if non-existing.
+        System.out.println("I would talk to: " + url);
+    }
+    
+    @Override
     public void send(final Layout<?> layout, final LogEvent event) throws IOException {
         final HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
         urlConnection.setAllowUserInteraction(false);

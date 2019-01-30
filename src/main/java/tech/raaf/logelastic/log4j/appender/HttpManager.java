@@ -38,7 +38,8 @@ public abstract class HttpManager extends AbstractManager {
     }
 
     public void startup() {
-        // This default implementation does nothing
+        // This default implementation does nothing. You probably 
+        // want to override this method in the implementing class.
     }
 
     public abstract void send(Layout<?> layout, LogEvent event) throws Exception;
