@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Configuration packages="com.ahold.development.logging.log4j.appender">
+    <Appenders>
+        <Console name="console" target="SYSTEM_OUT">
+            <PatternLayout pattern="[%level] [%d] [${hostName}] %c{1}: %msg%n" />
+        </Console>
+        <Elastic name="elastic" url="http://localhost:3000/jsonencoded">
+            <Property name="X-Java-Runtime" value="$${java:runtime}" />
+            <JsonLayout complete="true" properties="true"/>
+        </Elastic>
+    </Appenders>
+    <Loggers>
+        <AsyncRoot level="TRACE">
+            <AppenderRef ref="console" />
+            <AppenderRef ref="elastic" />
+        </AsyncRoot>
+    </Loggers>
+</Configuration>
