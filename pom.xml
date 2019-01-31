@@ -64,6 +64,7 @@
         <maven.release.plugin.version>2.5.3</maven.release.plugin.version>
         <maven.source.plugin.version>3.0.1</maven.source.plugin.version>
         <maven.surefire.plugin.version>2.22.1</maven.surefire.plugin.version>
+        <codehaus.versions.plugin>2.7</codehaus.versions.plugin>
         <sonatype.nexus.plugin.version>1.6.8</sonatype.nexus.plugin.version>
         <log4j.version>2.8.2</log4j.version>
     </properties>
@@ -168,6 +169,14 @@
                 <version>${maven.surefire.plugin.version}</version>
             </plugin>
 
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+                <version>${codehaus.versions.plugin}</version>
+                <configuration>
+                    <generateBackupPoms>false</generateBackupPoms>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
