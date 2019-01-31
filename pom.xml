@@ -20,7 +20,7 @@
     <scm>
         <url>https://github.com/raaftech/logelastic</url>
         <connection>https://github.com/raaftech/logelastic.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com:raaftech/logelastic.git</developerConnection>
+        <developerConnection>scm:git:ssh://git@github.com/raaftech/logelastic.git</developerConnection>
       <tag>v2.8.2</tag>
   </scm>
 
