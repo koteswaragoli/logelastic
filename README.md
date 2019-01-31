@@ -5,7 +5,17 @@ LogElastic is a simple Log4j2 logging component intended for shippling logs dire
 
 The service works much like the HTTP Appender plugin it's based on with a few added niceties: It checks at plugin-start if the endpoint is available. If yes, it checks for index existence, creates the index with an explicit mapping if not and enables itself. If the endpoint is not available, it disables itself so you don't get logs with stacktraces all over the place about the connector not being able to reach the target system every log message.
 
-Todo: document how to use. In short: Add jar to boot of runtime, add something like this to log4j2.xml:
+To add to your Maven project, add the following dependency to your pom.xml:
+
+```
+<dependency>
+    <groupId>tech.raaf</groupId>
+    <artifactId>logelastic</artifactId>
+    <version>2.8.2</version>
+</dependency>
+```
+
+You can also download the source by cloning this repository and place the resulting jar in the `lib/boot` of a runtime like Mulesoft Anypoint Platform 2.9 (for example - in any case, it would have to be on the platform classpath where ever the platform makes its logging stuff available, assuming that platform uses log4j2 in the first place). Then add something like this to log4j2.xml:
 
 ```
 <?xml version="1.0" encoding="utf-8"?>
