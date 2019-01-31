@@ -51,13 +51,13 @@ public final class ElasticAppender extends AbstractAppender {
 
         @PluginBuilderAttribute
         @Required(message = "No URL provided for ElasticAppender")
-        private URL url;
+        private String url;
 
         @PluginBuilderAttribute
         private String method = "POST";
 
         @PluginBuilderAttribute
-        private int connectTimeoutMillis = 0;
+        private int connectTimeoutMillis = 1000;
 
         @PluginBuilderAttribute
         private int readTimeoutMillis = 0;
@@ -78,7 +78,7 @@ public final class ElasticAppender extends AbstractAppender {
             return new ElasticAppender(getName(), getLayout(), getFilter(), isIgnoreExceptions(), httpManager);
         }
 
-        public URL getUrl() {
+        public String getUrl() {
             return url;
         }
 
@@ -106,7 +106,7 @@ public final class ElasticAppender extends AbstractAppender {
             return verifyHostname;
         }
 
-        public B setUrl(final URL url) {
+        public B setUrl(final String url) {
             this.url = url;
             return asBuilder();
         }

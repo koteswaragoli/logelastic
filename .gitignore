@@ -19,3 +19,6 @@ buildNumber.properties
 .project
 .factorypath
 .idea
+
+# Noise.
+**/.DS_Store
