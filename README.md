@@ -14,7 +14,7 @@ Todo: document how to use. In short: Add jar to boot of runtime, add something l
         <Console name="console" target="SYSTEM_OUT">
             <PatternLayout pattern="[%level] [%d] [${hostName}] %c{1}: %msg%n" />
         </Console>
-        <Elastic name="elastic" url="http://localhost:9200/someindex/_doc">
+        <Elastic name="elastic" url="http://localhost:9200/${hostName}/_doc">
             <Property name="X-Java-Runtime" value="$${java:runtime}" />
             <JsonLayout complete="true" properties="true"/>
         </Elastic>
