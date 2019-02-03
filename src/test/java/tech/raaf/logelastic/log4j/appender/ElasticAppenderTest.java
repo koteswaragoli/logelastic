@@ -11,5 +11,8 @@ public class ElasticAppenderTest {
     public void testImmutableCollections() {
         Logger logger = LogManager.getLogger(ElasticAppenderTest.class.getName());
         logger.debug("this is a message from me, world!");
+        logger.warn("But what is this");
+        logger.error("Oh no, more lemmings!");
+        logger.info("Verily I say unto thee, end thyself, logger!");
     }
 }

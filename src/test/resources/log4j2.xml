@@ -6,7 +6,7 @@
         </Console>
         <Elastic name="elastic" url="http://localhost:9200/${hostName}/_doc">
             <Property name="X-Java-Runtime" value="$${java:runtime}" />
-            <JsonLayout properties="true"/>
+            <JsonLayout complete="false" properties="true"/>
         </Elastic>
     </Appenders>
     <Loggers>

@@ -26,7 +26,7 @@ You can also download the source by cloning this repository and place the result
         </Console>
         <Elastic name="elastic" url="http://localhost:9200/${hostName}/_doc">
             <Property name="X-Java-Runtime" value="$${java:runtime}" />
-            <JsonLayout complete="true" properties="true"/>
+            <JsonLayout complete="false" properties="true"/>
         </Elastic>
     </Appenders>
     <Loggers>
@@ -38,7 +38,7 @@ You can also download the source by cloning this repository and place the result
 </Configuration>
 ```
 
-A message POST'ed to Elasticsearch looks like this:
+Note the `complete=false` option. If you do not set that, apparently log4j2 would add `[`, to the beginning of a request, then add `,` in between multiple message objects and end with a `]`. However, in our experience this does not work very predictably. Probably the intent would be to be able to POST multiple messages in one request, but we didn't see that happen. Instead, we would have separate requests suddenly start with a `,` which would confuse Elasticsearch to no end. In any case, a message POST'ed to Elasticsearch looks like this:
 
 ```
 {
