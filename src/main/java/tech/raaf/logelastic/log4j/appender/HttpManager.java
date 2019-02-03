@@ -17,13 +17,13 @@
 
 package tech.raaf.logelastic.log4j.appender;
 
-import java.util.Objects;
-
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.AbstractManager;
 import org.apache.logging.log4j.core.config.Configuration;
+
+import java.util.Objects;
 
 public abstract class HttpManager extends AbstractManager {
     private final Configuration configuration;

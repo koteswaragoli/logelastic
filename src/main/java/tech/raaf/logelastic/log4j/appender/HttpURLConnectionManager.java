@@ -17,19 +17,6 @@
 
 package tech.raaf.logelastic.log4j.appender;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.*;
-import java.nio.charset.Charset;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-
-import javax.net.ssl.HttpsURLConnection;
-import javax.xml.ws.http.HTTPException;
-
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.LoggerContext;
@@ -40,11 +27,24 @@ import org.apache.logging.log4j.core.lookup.StrSubstitutor;
 import org.apache.logging.log4j.core.net.ssl.SslConfiguration;
 import org.apache.logging.log4j.core.util.IOUtils;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.xml.ws.http.HTTPException;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.*;
+import java.nio.charset.Charset;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+
 public class HttpURLConnectionManager extends HttpManager {
 
     private static final Charset CHARSET = Charset.forName("US-ASCII");
 
-    private final String urlString;
     private final String parsedUrlString;
     private final String method;
     private final int connectTimeoutMillis;
@@ -60,7 +60,6 @@ public class HttpURLConnectionManager extends HttpManager {
                                     final SslConfiguration sslConfiguration,
                                     final boolean verifyHostname) {
         super(configuration, loggerContext, name);
-        this.urlString = urlString;
         this.parsedUrlString = new StrSubstitutor(System.getProperties()).replace(urlString).toLowerCase();
         this.method = Objects.requireNonNull(method, "method");
         this.connectTimeoutMillis = connectTimeoutMillis;

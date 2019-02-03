@@ -8,7 +8,7 @@ public class ElasticAppenderTest {
 
 
     @Test
-    public void testImmutableCollections() {
+    public void testSomeLoggingMessages() {
         Logger logger = LogManager.getLogger(ElasticAppenderTest.class.getName());
         logger.debug("this is a message from me, world!");
         logger.warn("But what is this");

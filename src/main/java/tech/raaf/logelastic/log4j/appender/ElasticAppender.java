@@ -17,11 +17,6 @@
 
 package tech.raaf.logelastic.log4j.appender;
 
-import java.io.Serializable;
-import java.net.URL;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
@@ -35,6 +30,10 @@ import org.apache.logging.log4j.core.config.plugins.PluginBuilderFactory;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.validation.constraints.Required;
 import org.apache.logging.log4j.core.net.ssl.SslConfiguration;
+
+import java.io.Serializable;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Sends log events over HTTP to Elasticsearch.
