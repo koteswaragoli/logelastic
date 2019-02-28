@@ -2,17 +2,17 @@
 <Configuration packages="com.ahold.development.logging.log4j.appender">
     <Appenders>
         <Console name="console" target="SYSTEM_OUT">
-            <PatternLayout pattern="[%level] [%d] [${hostName}] %c{1}: %msg%n" />
+            <PatternLayout pattern="[%level] [%d] [${hostName}] %c{1}: %msg%n"/>
         </Console>
         <Elastic name="elastic" url="http://localhost:9200/${hostName}/_doc">
-            <Property name="X-Java-Runtime" value="$${java:runtime}" />
-            <JsonLayout complete="false" properties="true"/>
+            <Property name="X-Java-Runtime" value="$${java:runtime}"/>
+            <ElasticLayout complete="false" properties="true"/>
         </Elastic>
     </Appenders>
     <Loggers>
         <AsyncRoot level="TRACE">
-            <AppenderRef ref="console" />
-            <AppenderRef ref="elastic" />
+            <AppenderRef ref="console"/>
+            <AppenderRef ref="elastic"/>
         </AsyncRoot>
     </Loggers>
 </Configuration>
