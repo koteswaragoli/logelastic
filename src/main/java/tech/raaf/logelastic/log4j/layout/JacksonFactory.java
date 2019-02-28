@@ -25,9 +25,7 @@ import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import org.apache.logging.log4j.core.impl.Log4jLogEvent;
 import org.apache.logging.log4j.core.jackson.*;
-import org.apache.logging.log4j.core.layout.XmlLayout;
 
-import javax.xml.stream.XMLStreamException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -71,48 +69,6 @@ abstract class JacksonFactory {
         @Override
         protected PrettyPrinter newPrettyPrinter() {
             return new DefaultPrettyPrinter();
-        }
-    }
-
-    static class XML extends JacksonFactory {
-
-        static final int DEFAULT_INDENT = 1;
-
-        private final boolean includeStacktrace;
-
-        public XML(final boolean includeStacktrace) {
-            this.includeStacktrace = includeStacktrace;
-        }
-
-        @Override
-        protected String getPropertNameForContextMap() {
-            return XmlConstants.ELT_CONTEXT_MAP;
-        }
-
-        @Override
-        protected String getPropertNameForSource() {
-            return XmlConstants.ELT_SOURCE;
-        }
-
-        @Override
-        protected String getPropertNameForNanoTime() {
-            return JsonConstants.ELT_NANO_TIME;
-        }
-
-        @Override
-        protected PrettyPrinter newCompactPrinter() {
-            // Yes, null is the proper answer.
-            return null;
-        }
-
-        @Override
-        protected ObjectMapper newObjectMapper() {
-            return new ObjectMapper();
-        }
-
-        @Override
-        protected PrettyPrinter newPrettyPrinter() {
-            return null;
         }
     }
 
