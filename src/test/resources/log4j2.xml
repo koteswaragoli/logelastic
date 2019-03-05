@@ -9,10 +9,12 @@
             <ElasticLayout complete="false" properties="true"/>
         </Elastic>
     </Appenders>
+
+    <!-- Note: all loggers are made async by log4j2.component.properties Log4jContextSelector setting -->
     <Loggers>
-        <AsyncRoot level="TRACE">
+        <Root level="TRACE">
             <AppenderRef ref="console"/>
             <AppenderRef ref="elastic"/>
-        </AsyncRoot>
+        </Root>
     </Loggers>
 </Configuration>
