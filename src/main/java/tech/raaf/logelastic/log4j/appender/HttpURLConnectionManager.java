@@ -75,7 +75,7 @@ public class HttpURLConnectionManager extends HttpManager {
 
     @Override
     public void send(final Layout<?> layout, final LogEvent event) throws IOException {
-        
+
         Set<Property> headers = new HashSet<>();
         if (layout.getContentType() != null) {
             headers.add(Property.createProperty(
@@ -88,8 +88,8 @@ public class HttpURLConnectionManager extends HttpManager {
                     property.getName(),
                     property.isValueNeedsLookup() ? getConfiguration().getStrSubstitutor().replace(event, property.getValue()) : property.getValue()));
         }
-        
-        
+
+
         // Send the logevent over HTTP.
         try {
             httpConnect(method, parsedUrlString, headers, layout.toByteArray(event));
@@ -101,10 +101,12 @@ public class HttpURLConnectionManager extends HttpManager {
                 byte[] body= toByteArray(this.getClass().getResourceAsStream("/index_mapping.json"));
                 httpConnect("PUT", parsedUrlString.toString().replaceAll("/_doc$", ""), headers, body);
                 httpConnect(method, parsedUrlString, headers, layout.toByteArray(event));
+            } else {
+                fakeLogMessage("WARN", e.getClass().getSimpleName(), "Got an HTTP status code that I don't handle: " + e.getStatusCode());
             }
         }
     }
-    
+
     private void httpConnect(String method, String urlString, Set<Property> headers, byte[] body) throws IOException {
         final URL url = new URL(urlString);
         final HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
@@ -118,7 +120,7 @@ public class HttpURLConnectionManager extends HttpManager {
         if (readTimeoutMillis > 0) {
             urlConnection.setReadTimeout(readTimeoutMillis);
         }
-        
+
         for (final Property header : headers) {
             urlConnection.setRequestProperty(
                     header.getName(),
@@ -128,9 +130,9 @@ public class HttpURLConnectionManager extends HttpManager {
         if (!(url.getProtocol().equalsIgnoreCase("http") || url.getProtocol().equalsIgnoreCase("https"))) {
             throw new ConfigurationException("URL must have scheme http or https");
         }
-        
+
         boolean isHttps = url.getProtocol().equalsIgnoreCase("https");
-        
+
         if (this.sslConfiguration != null && !isHttps) {
             throw new ConfigurationException("SSL configuration can only be specified with URL scheme https");
         }
@@ -138,11 +140,11 @@ public class HttpURLConnectionManager extends HttpManager {
         if (isHttps && !verifyHostname) {
             ((HttpsURLConnection)urlConnection).setHostnameVerifier(LaxHostnameVerifier.INSTANCE);
         }
-        
+
         if (sslConfiguration != null) {
             ((HttpsURLConnection)urlConnection).setSSLSocketFactory(sslConfiguration.getSslSocketFactory());
         }
-        
+
         urlConnection.setFixedLengthStreamingMode(body.length);
         urlConnection.connect();
         try (OutputStream os = urlConnection.getOutputStream()) {
@@ -156,14 +158,14 @@ public class HttpURLConnectionManager extends HttpManager {
             }
         } catch (final IOException e) {
             final StringBuilder errorMessage = new StringBuilder();
-            
+
             try (InputStream es = urlConnection.getErrorStream()) {
                 errorMessage.append(urlConnection.getResponseCode());
-            
+
                 if (urlConnection.getResponseMessage() != null) {
                     errorMessage.append(' ').append(urlConnection.getResponseMessage());
                 }
-            
+
                 if (es != null) {
                     errorMessage.append(" - ");
                     int n;
@@ -188,13 +190,13 @@ public class HttpURLConnectionManager extends HttpManager {
 
     private void  fakeLogMessage(String level, String logger, String message) {
         String hostname = "unknown";
-        
+
         try {
             hostname = InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
             // empty
         }
-        
+
         System.err.println("[" + level.toUpperCase() + "] [" +  getCurrentDateTime() + "] [" + hostname  +  "] " +  logger + ": " + message);
 
     }
