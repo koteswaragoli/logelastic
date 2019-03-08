@@ -30,6 +30,7 @@ import org.apache.logging.log4j.core.config.plugins.PluginBuilderFactory;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.validation.constraints.Required;
 import org.apache.logging.log4j.core.net.ssl.SslConfiguration;
+import tech.raaf.logelastic.log4j.config.Header;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -62,7 +63,10 @@ public final class ElasticAppender extends AbstractAppender {
         private int readTimeoutMillis = 0;
 
         @PluginElement("Headers")
-        private Property[] headers;
+        private Header[] headers;
+
+        @PluginElement("Properties")
+        private Property[] properties;
 
         @PluginElement("SslConfiguration")
         private SslConfiguration sslConfiguration;
@@ -73,7 +77,7 @@ public final class ElasticAppender extends AbstractAppender {
         @Override
         public ElasticAppender build() {
             final HttpManager httpManager = new HttpURLConnectionManager(getConfiguration(), getConfiguration().getLoggerContext(),
-                getName(), url, method, connectTimeoutMillis, readTimeoutMillis, headers, sslConfiguration, verifyHostname);
+                getName(), url, method, connectTimeoutMillis, readTimeoutMillis, headers, properties, sslConfiguration, verifyHostname);
             return new ElasticAppender(getName(), getLayout(), getFilter(), isIgnoreExceptions(), httpManager);
         }
 
@@ -93,8 +97,12 @@ public final class ElasticAppender extends AbstractAppender {
             return readTimeoutMillis;
         }
 
-        public Property[] getHeaders() {
+        public Header[] getHeaders() {
             return headers;
+        }
+
+        public Property[] getProperties() {
+            return properties;
         }
 
         public SslConfiguration getSslConfiguration() {
@@ -125,8 +133,13 @@ public final class ElasticAppender extends AbstractAppender {
             return asBuilder();
         }
 
-        public B setHeaders(final Property[] headers) {
+        public B setHeaders(final Header[] headers) {
             this.headers = headers;
+            return asBuilder();
+        }
+
+        public B setProperties(final Property[] properties) {
+            this.properties = properties;
             return asBuilder();
         }
 

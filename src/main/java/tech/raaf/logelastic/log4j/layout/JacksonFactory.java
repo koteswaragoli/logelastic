@@ -29,9 +29,9 @@ import org.apache.logging.log4j.core.jackson.*;
 import java.util.HashSet;
 import java.util.Set;
 
-abstract class JacksonFactory {
+public abstract class JacksonFactory {
 
-    static class JSON extends JacksonFactory {
+    public static class JSON extends JacksonFactory {
 
         private final boolean encodeThreadContextAsList;
         private final boolean includeStacktrace;
@@ -84,7 +84,7 @@ abstract class JacksonFactory {
 
     abstract protected PrettyPrinter newPrettyPrinter();
 
-    ObjectWriter newWriter(final boolean locationInfo, final boolean properties, final boolean compact) {
+    public ObjectWriter newWriter(final boolean locationInfo, final boolean properties, final boolean compact) {
         final SimpleFilterProvider filters = new SimpleFilterProvider();
         final Set<String> except = new HashSet<>(2);
         if (!locationInfo) {

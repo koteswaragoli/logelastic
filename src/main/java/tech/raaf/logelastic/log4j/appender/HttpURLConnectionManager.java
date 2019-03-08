@@ -17,6 +17,7 @@
 
 package tech.raaf.logelastic.log4j.appender;
 
+import com.fasterxml.jackson.databind.ObjectWriter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.LoggerContext;
@@ -26,6 +27,9 @@ import org.apache.logging.log4j.core.config.Property;
 import org.apache.logging.log4j.core.lookup.StrSubstitutor;
 import org.apache.logging.log4j.core.net.ssl.SslConfiguration;
 import org.apache.logging.log4j.core.util.IOUtils;
+import tech.raaf.logelastic.log4j.EnrichedLogEvent;
+import tech.raaf.logelastic.log4j.config.Header;
+import tech.raaf.logelastic.log4j.layout.JacksonFactory;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.xml.ws.http.HTTPException;
@@ -49,21 +53,30 @@ public class HttpURLConnectionManager extends HttpManager {
     private final String method;
     private final int connectTimeoutMillis;
     private final int readTimeoutMillis;
+    private final Header[] headers;
     private final Property[] properties;
     private final SslConfiguration sslConfiguration;
     private final boolean verifyHostname;
 
-    public HttpURLConnectionManager(final Configuration configuration, final LoggerContext loggerContext, final String name,
-                                    final String urlString, final String method, final int connectTimeoutMillis,
-                                    final int readTimeoutMillis,
-                                    final Property[] properties,
-                                    final SslConfiguration sslConfiguration,
-                                    final boolean verifyHostname) {
+    public HttpURLConnectionManager(
+            final Configuration configuration,
+            final LoggerContext loggerContext,
+            final String name,
+            final String urlString,
+            final String method,
+            final int connectTimeoutMillis,
+            final int readTimeoutMillis,
+            final Header[] headers,
+            final Property[] properties,
+            final SslConfiguration sslConfiguration,
+            final boolean verifyHostname) {
+
         super(configuration, loggerContext, name);
         this.parsedUrlString = new StrSubstitutor(System.getProperties()).replace(urlString).toLowerCase();
         this.method = Objects.requireNonNull(method, "method");
         this.connectTimeoutMillis = connectTimeoutMillis;
         this.readTimeoutMillis = readTimeoutMillis;
+        this.headers = headers != null ? headers : new Header[0];
         this.properties = properties != null ? properties : new Property[0];
         this.sslConfiguration = sslConfiguration;
         this.verifyHostname = verifyHostname;
@@ -76,38 +89,53 @@ public class HttpURLConnectionManager extends HttpManager {
     @Override
     public void send(final Layout<?> layout, final LogEvent event) throws IOException {
 
-        Set<Property> headers = new HashSet<>();
+        // Create a client header set  and add a Content-type header.
+        Set<Header> clientHeaders = new HashSet<>();
         if (layout.getContentType() != null) {
-            headers.add(Property.createProperty(
+            clientHeaders.add(Header.createHeader(
                     "Content-Type",
                     layout.getContentType()));
         }
 
-        for (final Property property : properties) {
-            headers.add(Property.createProperty(
-                    property.getName(),
-                    property.isValueNeedsLookup() ? getConfiguration().getStrSubstitutor().replace(event, property.getValue()) : property.getValue()));
+        // Add headers passed in the configuration.
+        for (final Header header : headers) {
+            clientHeaders.add(Header.createHeader(
+                    header.getName(),
+                    header.isValueNeedsLookup() ? getConfiguration().getStrSubstitutor().replace(event, header.getValue()) : header.getValue()));
         }
+
+        // TODO: Create an enriched Object from LogEvent, LogEvent.getMessage() and Property[].
+        // The LogEvent would be the root, message would become an embedded object and Property[]
+        // would be flatly appended to the root? Or maybe nicer as an embedded object also?
+        // This enriched object would be JSON byte array'ed and passed to httpConnect instead of
+        // layout.toByteArray(event).
+
+        // Example showing an EnrichedLogEvent being JSONified. Todo: add message object smartness
+        // like Menno wants it and add kv's from the properties array. This would mean something
+        // like "new EnrichedLogEvent(event, properties)"
+        final ObjectWriter ow = new JacksonFactory.JSON(false, false).newWriter(
+                false, false, false);
+        System.err.println(ow.writeValueAsString(new EnrichedLogEvent(event)));
 
 
         // Send the logevent over HTTP.
         try {
-            httpConnect(method, parsedUrlString, headers, layout.toByteArray(event));
+            httpConnect(method, parsedUrlString, clientHeaders, layout.toByteArray(event));
         } catch (final ConnectException|SocketTimeoutException|UnknownHostException e) {
             fakeLogMessage("ERROR", e.getClass().getSimpleName(), e.getMessage());
         } catch (final HTTPException e) {
             if (e.getStatusCode() == 404 ) {
                 fakeLogMessage("WARN", e.getClass().getSimpleName(), "Index does not exist, (re)creating..");
                 byte[] body= toByteArray(this.getClass().getResourceAsStream("/index_mapping.json"));
-                httpConnect("PUT", parsedUrlString.toString().replaceAll("/_doc$", ""), headers, body);
-                httpConnect(method, parsedUrlString, headers, layout.toByteArray(event));
+                httpConnect("PUT", parsedUrlString.toString().replaceAll("/_doc$", ""), clientHeaders, body);
+                httpConnect(method, parsedUrlString, clientHeaders, layout.toByteArray(event));
             } else {
                 fakeLogMessage("WARN", e.getClass().getSimpleName(), "Got an HTTP status code that I don't handle: " + e.getStatusCode());
             }
         }
     }
 
-    private void httpConnect(String method, String urlString, Set<Property> headers, byte[] body) throws IOException {
+    private void httpConnect(String method, String urlString, Set<Header> headers, byte[] body) throws IOException {
         final URL url = new URL(urlString);
         final HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
         urlConnection.setAllowUserInteraction(false);
@@ -121,7 +149,7 @@ public class HttpURLConnectionManager extends HttpManager {
             urlConnection.setReadTimeout(readTimeoutMillis);
         }
 
-        for (final Property header : headers) {
+        for (final Header header : headers) {
             urlConnection.setRequestProperty(
                     header.getName(),
                     header.getValue());
