@@ -113,9 +113,9 @@ public class HttpURLConnectionManager extends HttpManager {
         // Example showing an EnrichedLogEvent being JSONified. Todo: add message object smartness
         // like Menno wants it and add kv's from the properties array. This would mean something
         // like "new EnrichedLogEvent(event, properties)"
-        final ObjectWriter ow = new JacksonFactory.JSON(false, false).newWriter(
-                false, false, false);
-        System.err.println(ow.writeValueAsString(new EnrichedLogEvent(event)));
+        //final ObjectWriter ow = new JacksonFactory.JSON(false, false).newWriter(
+         //       false, false, false);
+        //System.err.println(ow.writeValueAsString(new EnrichedLogEvent(event)));
 
 
         // Send the logevent over HTTP.
