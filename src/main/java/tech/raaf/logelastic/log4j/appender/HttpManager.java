@@ -17,7 +17,6 @@
 
 package tech.raaf.logelastic.log4j.appender;
 
-import com.fasterxml.jackson.databind.ObjectWriter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.AbstractManager;
@@ -26,9 +25,7 @@ import org.apache.logging.log4j.core.config.ConfigurationException;
 import org.apache.logging.log4j.core.config.Property;
 import org.apache.logging.log4j.core.net.ssl.SslConfiguration;
 import org.apache.logging.log4j.core.util.IOUtils;
-import tech.raaf.logelastic.log4j.EnrichedLogEvent;
 import tech.raaf.logelastic.log4j.config.Header;
-import tech.raaf.logelastic.log4j.layout.JacksonFactory;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.xml.ws.http.HTTPException;
@@ -38,15 +35,21 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.*;
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
 public class HttpManager extends AbstractManager {
 
+    private static int counter = 0;
+    private static Date when = new Date();
+
     private static final Charset CHARSET = Charset.forName("US-ASCII");
+    private static final int[] SECONDS = new int[] { 0, 1, 10, 30, 60, 120, 180, 240, 300, 600, 900, 1200 };
 
     private final Configuration configuration;
     private final URL indexUrl;
@@ -82,14 +85,11 @@ public class HttpManager extends AbstractManager {
         this.verifyHostname = verifyHostname;
     }
 
-    public void startup() {
-    }
-
     private Configuration getConfiguration() {
         return configuration;
     }
 
-    public void send(final Layout<?> layout, final LogEvent event) throws IOException {
+    void send(final Layout<?> layout, final LogEvent event) throws IOException {
 
         // Create a client header set  and add a Content-type header.
         Set<Header> clientHeaders = new HashSet<>();
@@ -109,7 +109,7 @@ public class HttpManager extends AbstractManager {
         // TODO: Create an enriched Object from LogEvent, LogEvent.getMessage() and Property[].
         // The LogEvent would be the root, message would become an embedded object and Property[]
         // would be flatly appended to the root? Or maybe nicer as an embedded object also?
-        // This enriched object would be JSON byte array'ed and passed to httpConnect instead of
+        // This enriched object would be JSON byte array'ed and passed to conditionalConnect instead of
         // layout.toByteArray(event).
 
         // Example showing an EnrichedLogEvent being JSONified. Todo: add message object smartness
@@ -120,38 +120,56 @@ public class HttpManager extends AbstractManager {
         //System.err.println(ow.writeValueAsString(new EnrichedLogEvent(event)));
 
 
-        // Send the logevent over HTTP.
-        try {
-            httpConnect("POST", postUrl, clientHeaders, layout.toByteArray(event));
-        } catch (final ConnectException|SocketTimeoutException|UnknownHostException e) {
-            fakeLogMessage("ERROR", e.getClass().getSimpleName(), e.getMessage());
-        } catch (final HTTPException e) {
-            if (e.getStatusCode() == 404 ) {
-                fakeLogMessage("WARN", e.getClass().getSimpleName(), "Index does not exist, (re)creating..");
-                byte[] body= toByteArray(this.getClass().getResourceAsStream("/index_mapping.json"));
-                httpConnect("PUT", indexUrl, clientHeaders, body);
-                httpConnect("POST", postUrl, clientHeaders, layout.toByteArray(event));
-            } else {
-                fakeLogMessage("WARN", e.getClass().getSimpleName(), "Got an HTTP status code that I don't handle: " + e.getStatusCode());
+        // Send the logevent over HTTP, handle conditional connect.
+        Date now = new Date();
+        if (when.equals(now) || when.before(now)) {
+            try {
+                if (counter != 0) {
+                    fakeLogMessage("WARN", getClass().getSimpleName(), "Ah, it's around " + new SimpleDateFormat("HH:mm:ss").format(when) + ", attempting to resume logging..  ");
+                }
+                conditionalConnect("POST", postUrl, clientHeaders, layout.toByteArray(event));
+                counter = 0;
+                when.setTime(now.getTime());
+
+            } catch (ConnectException|SocketTimeoutException|UnknownHostException e) {
+                if ( counter <= SECONDS.length ) {
+                    counter++;
+                } else {
+                    counter = 0;
+                }
+
+                when.setTime(now.getTime() + (SECONDS[counter] * 1000));
+                fakeLogMessage("WARN", e.getClass().getSimpleName(), "Skipping log shipping to Elasticsearch for  " + SECONDS[counter] + " seconds.. Resuming somewhere around " + new SimpleDateFormat("HH:mm:ss").format(when));
+
+            } catch (HTTPException e) {
+                if (e.getStatusCode() == 404 ) {
+                    fakeLogMessage("WARN", e.getClass().getSimpleName(), "Index does not exist, (re)creating..");
+                    byte[] body= toByteArray(this.getClass().getResourceAsStream("/index_mapping.json"));
+                    conditionalConnect("PUT", indexUrl, clientHeaders, body);
+                    conditionalConnect("POST", postUrl, clientHeaders, layout.toByteArray(event));
+                } else {
+                    fakeLogMessage("WARN", e.getClass().getSimpleName(), "Got an HTTP status code that I don't handle: " + e.getStatusCode());
+                }
             }
         }
     }
 
-    private void httpConnect(String method, URL url, Set<Header> headers, byte[] body) throws IOException {
-        final HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
-        urlConnection.setAllowUserInteraction(false);
-        urlConnection.setDoOutput(true);
-        urlConnection.setDoInput(true);
-        urlConnection.setRequestMethod(method);
+    private void conditionalConnect(String method, URL url, Set<Header> headers, byte[] body) throws IOException {
+        final HttpURLConnection httpConnection = (HttpURLConnection)url.openConnection();
+        httpConnection.setAllowUserInteraction(false);
+        httpConnection.setDoOutput(true);
+        httpConnection.setDoInput(true);
+        httpConnection.setRequestMethod(method);
+
         if (connectTimeoutMillis > 0) {
-            urlConnection.setConnectTimeout(connectTimeoutMillis);
+            httpConnection.setConnectTimeout(connectTimeoutMillis);
         }
         if (readTimeoutMillis > 0) {
-            urlConnection.setReadTimeout(readTimeoutMillis);
+            httpConnection.setReadTimeout(readTimeoutMillis);
         }
 
         for (final Header header : headers) {
-            urlConnection.setRequestProperty(
+            httpConnection.setRequestProperty(
                     header.getName(),
                     header.getValue());
         }
@@ -167,32 +185,37 @@ public class HttpManager extends AbstractManager {
         }
 
         if (isHttps && !verifyHostname) {
-            ((HttpsURLConnection)urlConnection).setHostnameVerifier(LaxHostnameVerifier.INSTANCE);
+            ((HttpsURLConnection)httpConnection).setHostnameVerifier(LaxHostnameVerifier.INSTANCE);
         }
 
         if (sslConfiguration != null) {
-            ((HttpsURLConnection)urlConnection).setSSLSocketFactory(sslConfiguration.getSslSocketFactory());
+            ((HttpsURLConnection)httpConnection).setSSLSocketFactory(sslConfiguration.getSslSocketFactory());
         }
 
-        urlConnection.setFixedLengthStreamingMode(body.length);
-        urlConnection.connect();
-        try (OutputStream os = urlConnection.getOutputStream()) {
+        httpConnection.setFixedLengthStreamingMode(body.length);
+
+
+
+
+        httpConnection.connect();
+
+        try (OutputStream os = httpConnection.getOutputStream()) {
             os.write(body);
         }
 
         final byte[] buffer = new byte[1024];
-        try (InputStream is = urlConnection.getInputStream()) {
+
+        try (InputStream is = httpConnection.getInputStream()) {
             while (IOUtils.EOF != is.read(buffer)) {
-                // empty
             }
-        } catch (final IOException e) {
+        } catch (IOException e) {
             final StringBuilder errorMessage = new StringBuilder();
 
-            try (InputStream es = urlConnection.getErrorStream()) {
-                errorMessage.append(urlConnection.getResponseCode());
+            try (InputStream es = httpConnection.getErrorStream()) {
+                errorMessage.append(httpConnection.getResponseCode());
 
-                if (urlConnection.getResponseMessage() != null) {
-                    errorMessage.append(' ').append(urlConnection.getResponseMessage());
+                if (httpConnection.getResponseMessage() != null) {
+                    errorMessage.append(' ').append(httpConnection.getResponseMessage());
                 }
 
                 if (es != null) {
@@ -204,17 +227,18 @@ public class HttpManager extends AbstractManager {
                 }
             }
 
-            switch (urlConnection.getResponseCode()) {
+            switch (httpConnection.getResponseCode()) {
                 case 404:
                     throw new HTTPException(404);
                 default:
-                    if (urlConnection.getResponseCode() > -1) {
+                    if (httpConnection.getResponseCode() > -1) {
                         throw new IOException(errorMessage.toString());
                     } else {
                         throw e;
                     }
             }
         }
+
     }
 
     private void  fakeLogMessage(String level, String logger, String message) {

@@ -172,7 +172,6 @@ public final class ElasticAppender extends AbstractAppender {
     @Override
     public void start() {
         super.start();
-        manager.startup();
     }
 
     @Override

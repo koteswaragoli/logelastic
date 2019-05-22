@@ -10,13 +10,26 @@ public class ElasticAppenderTest {
     @Test
     public void testSomeLoggingMessages() {
         Logger logger = LogManager.getLogger(ElasticAppenderTest.class.getName());
-        System.out.println("About to print first log message..");
         logger.debug("this is a message from me, world!");
-        System.out.println("About to print second log message..");
+        doWait(1);
         logger.warn("But what is this");
-        System.out.println("About to print third log message..");
+        doWait(1);
         logger.error("Oh no, more lemmings!");
-        System.out.println("About to print last log message..");
+        doWait(1);
+
+        for (int i = 0; i < 3; i++) {
+            logger.info("Boring log message " + i);
+            doWait(1);
+        }
+
         logger.info("Verily I say unto thee, end thyself, logger!");
+    }
+
+    private static void doWait(int seconds) {
+        try {
+            Thread.sleep(seconds  * 1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
