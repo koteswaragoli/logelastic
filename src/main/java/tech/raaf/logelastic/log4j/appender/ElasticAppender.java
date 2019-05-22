@@ -29,10 +29,13 @@ import org.apache.logging.log4j.core.config.plugins.PluginBuilderAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginBuilderFactory;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.validation.constraints.Required;
+import org.apache.logging.log4j.core.lookup.StrSubstitutor;
 import org.apache.logging.log4j.core.net.ssl.SslConfiguration;
 import tech.raaf.logelastic.log4j.config.Header;
 
 import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -49,12 +52,11 @@ public final class ElasticAppender extends AbstractAppender {
     public static class Builder<B extends Builder<B>> extends AbstractAppender.Builder<B>
             implements org.apache.logging.log4j.core.util.Builder<ElasticAppender> {
 
+        private HttpManager httpManager = null;
+
         @PluginBuilderAttribute
         @Required(message = "No URL provided for ElasticAppender")
         private String url;
-
-        @PluginBuilderAttribute
-        private String method = "POST";
 
         @PluginBuilderAttribute
         private int connectTimeoutMillis = 1000;
@@ -76,17 +78,18 @@ public final class ElasticAppender extends AbstractAppender {
 
         @Override
         public ElasticAppender build() {
-            final HttpManager httpManager = new HttpURLConnectionManager(getConfiguration(), getConfiguration().getLoggerContext(),
-                getName(), url, method, connectTimeoutMillis, readTimeoutMillis, headers, properties, sslConfiguration, verifyHostname);
+            url = new StrSubstitutor(System.getProperties()).replace(url).toLowerCase();
+            try {
+                httpManager = new HttpManager(getConfiguration(),
+                    getName(), new URL(url), new URL(url + "/_doc"), connectTimeoutMillis, readTimeoutMillis, headers, properties, sslConfiguration, verifyHostname);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
             return new ElasticAppender(getName(), getLayout(), getFilter(), isIgnoreExceptions(), httpManager);
         }
 
         public String getUrl() {
             return url;
-        }
-
-        public String getMethod() {
-            return method;
         }
 
         public int getConnectTimeoutMillis() {
@@ -115,11 +118,6 @@ public final class ElasticAppender extends AbstractAppender {
 
         public B setUrl(final String url) {
             this.url = url;
-            return asBuilder();
-        }
-
-        public B setMethod(final String method) {
-            this.method = method;
             return asBuilder();
         }
 
