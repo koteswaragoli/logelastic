@@ -3,13 +3,28 @@
         "_doc": {
             "properties": {
                 "contextMap": {
+                    "dynamic": "true",
                     "type": "object"
+                },
+                "contextStack": {
+                    "type": "text"
                 },
                 "endOfBatch": {
                     "type": "boolean"
                 },
                 "formattedMessage": {
                     "type": "text"
+                },
+                "instant": {
+                    "type": "object",
+                    "properties": {
+                        "epochSecond": {
+                            "type": "date"
+                        },
+                        "nanoOfSecond": {
+                            "type": "long"
+                        }
+                    }
                 },
                 "level": {
                     "type": "text"
@@ -20,11 +35,32 @@
                 "loggerName": {
                     "type": "text"
                 },
+                "marker": {
+                    "dynamic": "true",
+                    "type": "object"
+                },
                 "message": {
                     "type": "text"
                 },
                 "parameterCount": {
                     "type": "long"
+                },
+                "source": {
+                    "type": "object",
+                    "properties": {
+                        "class": {
+                            "type": "text"
+                        },
+                        "method": {
+                            "type": "text"
+                        },
+                        "file": {
+                            "type": "text"
+                        },
+                        "line": {
+                            "type": "long"
+                        }
+                    }
                 },
                 "thread": {
                     "type": "text"
@@ -34,6 +70,46 @@
                 },
                 "threadPriority": {
                     "type": "long"
+                },
+                "thrown": {
+                    "type": "object",
+                    "properties": {
+                        "commonElementCount": {
+                            "type": "long"
+                        },
+                        "message": {
+                            "type": "text"
+                        },
+                        "name": {
+                            "type": "text"
+                        },
+                        "extendedStackTrace": {
+                            "type": "object",
+                            "properties": {
+                                "class": {
+                                    "type": "text"
+                                },
+                                "method": {
+                                    "type": "text"
+                                },
+                                "file": {
+                                    "type": "text"
+                                },
+                                "line": {
+                                    "type": "long"
+                                },
+                                "exact": {
+                                    "type": "boolean"
+                                },
+                                "location": {
+                                    "type": "text"
+                                },
+                                "version": {
+                                    "type": "text"
+                                }
+                            }
+                        }
+                    }
                 },
                 "timeMillis": {
                     "type": "date"

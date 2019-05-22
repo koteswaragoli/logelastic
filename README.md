@@ -15,7 +15,7 @@ To add to your Maven project, add the following dependency to your pom.xml:
 </dependency>
 ```
 
-You can also download the source by cloning this repository and place the resulting jar in the `lib/boot` of a runtime like Mulesoft Anypoint Platform 3.8 or 3.9 (for example - in any case, it would have to be on the platform classpath where ever the platform makes its logging stuff available, assuming that platform uses log4j2 in the first place). Then add something like this to log4j2.xml:
+You can also download the source by cloning this repository and place the resulting jar in the `lib/boot` of a runtime like Mulesoft Anypoint Platform 3.9 or 4.2 (for example - in any case, it would have to be on the platform classpath where ever the platform makes its logging stuff available, assuming that platform uses log4j2 in the first place). Then add something like this to log4j2.xml:
 
 ```
 <?xml version="1.0" encoding="utf-8"?>
@@ -38,7 +38,7 @@ You can also download the source by cloning this repository and place the result
 </Configuration>
 ```
 
-Note the `complete=false` option. If you do not set that, apparently log4j2 would add `[`, to the beginning of a request, then add `,` in between multiple message objects and end with a `]`. However, in our experience this does not work very predictably. Probably the intent would be to be able to POST multiple messages in one request, but we didn't see that happen. Instead, we would have separate requests suddenly start with a `,` which would confuse Elasticsearch to no end. In any case, a message POST'ed to Elasticsearch looks like this:
+Note the `complete=false` option. If you do not set that, apparently log4j2 would add `[`, to the beginning of a request, then add `,` in between multiple message objects and end with a `]`. However, in our experience this does not work very predictably. Probably the intent would be to be able to POST multiple messages in one request, but we didn't see that happen. Instead, we would have separate requests suddenly start with a `,` which would confuse Elasticsearch to no end. In any case, a message POST'ed to Elasticsearch looks like this when using Log4j 2.9ish or earlier:
 
 ```
 {
@@ -55,4 +55,57 @@ Note the `complete=false` option. If you do not set that, apparently log4j2 woul
     "parameterCount": 0,
     "threadPriority": 5
 }
+```
+
+And can look something like this when using Log4j 2.11 or higher:
+
+```
+    {
+      "instant" : {
+        "epochSecond" : 1493121664,
+        "nanoOfSecond" : 118000000
+      },
+      "thread" : "main",
+      "level" : "INFO",
+      "loggerName" : "HelloWorld",
+      "marker" : {
+        "name" : "child",
+        "parents" : [ {
+          "name" : "parent",
+          "parents" : [ {
+            "name" : "grandparent"
+          } ]
+        } ]
+      },
+      "message" : "Hello, world!",
+      "thrown" : {
+        "commonElementCount" : 0,
+        "message" : "error message",
+        "name" : "java.lang.RuntimeException",
+        "extendedStackTrace" : [ {
+          "class" : "logtest.Main",
+          "method" : "main",
+          "file" : "Main.java",
+          "line" : 29,
+          "exact" : true,
+          "location" : "classes/",
+          "version" : "?"
+        } ]
+      },
+      "contextStack" : [ "one", "two" ],
+      "endOfBatch" : false,
+      "loggerFqcn" : "org.apache.logging.log4j.spi.AbstractLogger",
+      "contextMap" : {
+        "bar" : "BAR",
+        "foo" : "FOO"
+      },
+      "threadId" : 1,
+      "threadPriority" : 5,
+      "source" : {
+        "class" : "logtest.Main",
+        "method" : "main",
+        "file" : "Main.java",
+        "line" : 29
+      }
+    }
 ```
