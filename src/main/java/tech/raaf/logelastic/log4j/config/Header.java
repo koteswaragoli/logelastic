@@ -47,7 +47,7 @@ public final class Header {
 
     /**
      * Returns {@code true} if the value contains a substitutable header that requires a lookup to be resolved.
-     * @return {@code true} if the value contains {@code "${"}, {@code false} otherwise
+     * @return true if the value contains "${", false otherwise
      */
     public boolean isValueNeedsLookup() {
         return valueNeedsLookup;
