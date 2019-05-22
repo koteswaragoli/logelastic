@@ -11,7 +11,7 @@ To add to your Maven project, add the following dependency to your pom.xml:
 <dependency>
     <groupId>tech.raaf</groupId>
     <artifactId>logelastic</artifactId>
-    <version>2.8.2</version>
+    <version>2.8.3</version>
 </dependency>
 ```
 
@@ -47,10 +47,12 @@ Note the `complete=false` option. If you do not set that, apparently log4j2 woul
     "level": "DEBUG",
     "loggerName": "tech.raaf.logelastic.log4j.appender.ElasticAppenderTest",
     "message": "this is a message from me, world!",
+    "formattedMessage": "this is a message from me, world!",
     "endOfBatch": true,
     "loggerFqcn": "org.apache.logging.log4j.spi.AbstractLogger",
     "contextMap": {},
     "threadId": 1,
+    "parameterCount": 0,
     "threadPriority": 5
 }
 ```
