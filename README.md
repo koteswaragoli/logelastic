@@ -11,7 +11,7 @@ To add to your Maven project, add the following dependency to your pom.xml:
 <dependency>
     <groupId>tech.raaf</groupId>
     <artifactId>logelastic</artifactId>
-    <version>2.8.3</version>
+    <version>3.0.0</version>
 </dependency>
 ```
 
