@@ -24,7 +24,7 @@ You can also download the source by cloning this repository and place the result
         <Console name="console" target="SYSTEM_OUT">
             <PatternLayout pattern="[%level] [%d] [${hostName}] %c{1}: %msg%n" />
         </Console>
-        <Elastic name="elastic" url="http://localhost:9200/${hostName}/_doc">
+        <Elastic name="elastic" url="http://localhost:9200/${hostName}">
             <Property name="X-Java-Runtime" value="$${java:runtime}" />
             <JsonLayout complete="false" properties="true"/>
         </Elastic>
