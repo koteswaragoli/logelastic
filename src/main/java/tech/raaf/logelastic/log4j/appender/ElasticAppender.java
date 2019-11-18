@@ -48,6 +48,7 @@ public final class ElasticAppender extends AbstractAppender {
 
     /**
      * Builds ElasticAppender instances.
+     *
      * @param <B> The type to build
      */
     public static class Builder<B extends Builder<B>> extends AbstractAppender.Builder<B>
@@ -82,14 +83,12 @@ public final class ElasticAppender extends AbstractAppender {
 
         @Override
         public ElasticAppender build() {
-            System.out.println("Plugin URL: "+url);
+            System.out.println("Plugin URL: " + url);
             url = new StrSubstitutor(System.getProperties()).replace(url).toLowerCase();
-           System.out.println("indexFrequency:"+indexFrequency);
-            System.out.println("Translated value: "+translateIndexFrequency(indexFrequency));
+
             try {
-                System.out.println(new URL(url + translateIndexFrequency(indexFrequency) + "/_doc"));
                 httpManager = new HttpManager(getConfiguration(),
-                    getName(), new URL(url), new URL(url + "/_doc"), connectTimeoutMillis, readTimeoutMillis, headers, properties, sslConfiguration, verifyHostname);
+                        getName(), new URL(url), new URL(url + translateIndexFrequency(indexFrequency) + "/_doc"), connectTimeoutMillis, readTimeoutMillis, headers, properties, sslConfiguration, verifyHostname);
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
@@ -97,23 +96,23 @@ public final class ElasticAppender extends AbstractAppender {
         }
 
         private String translateIndexFrequency(String indexFrequency) {
-            System.out.println("translating: "+indexFrequency);
-            if(indexFrequency == null || indexFrequency.trim().isEmpty())
+
+            if (indexFrequency == null || indexFrequency.trim().isEmpty())
                 return "";
 
-            if(indexFrequency.equalsIgnoreCase(IndexFrequency.NONE.toString()))
-                        return "";//default to empty
+            if (indexFrequency.equalsIgnoreCase(IndexFrequency.NONE.toString()))
+                return "";//default to empty
             LocalDateTime localDateTime = LocalDateTime.now(); //This is java 8..so is this okay as it wont by backward compatible with Java 7?
-            if(indexFrequency.equalsIgnoreCase(IndexFrequency.MINUTE.toString()))
+            if (indexFrequency.equalsIgnoreCase(IndexFrequency.MINUTE.toString()))
                 return new StringBuilder().append(localDateTime.getYear()).append(localDateTime.getMonthValue()).append(localDateTime.getDayOfMonth()).append(localDateTime.getHour()).append(localDateTime.getMinute()).toString(); //generate YYYYMMDDhhmm
-            if(indexFrequency.equalsIgnoreCase(IndexFrequency.HOUR.toString()))
+            if (indexFrequency.equalsIgnoreCase(IndexFrequency.HOUR.toString()))
                 return new StringBuilder().append(localDateTime.getYear()).append(localDateTime.getMonthValue()).append(localDateTime.getDayOfMonth()).append(localDateTime.getHour()).toString();// generate YYYYMMDDhh
-            if(indexFrequency.equalsIgnoreCase(IndexFrequency.DAY.toString()))
+            if (indexFrequency.equalsIgnoreCase(IndexFrequency.DAY.toString()))
                 return new StringBuilder().append(localDateTime.getYear()).append(localDateTime.getMonthValue()).append(localDateTime.getDayOfMonth()).toString(); // generate YYYYMMDD
-            if(indexFrequency.equalsIgnoreCase(IndexFrequency.MONTH.toString()))
+            if (indexFrequency.equalsIgnoreCase(IndexFrequency.MONTH.toString()))
                 return new StringBuilder().append(localDateTime.getYear()).append(localDateTime.getMonthValue()).toString(); // generate YYYYMM
-            if(indexFrequency.equalsIgnoreCase(IndexFrequency.YEAR.toString()))
-                return  new StringBuilder().append(localDateTime.getYear()).toString(); // generate YYYY
+            if (indexFrequency.equalsIgnoreCase(IndexFrequency.YEAR.toString()))
+                return new StringBuilder().append(localDateTime.getYear()).toString(); // generate YYYY
             return "";
         }
 
@@ -233,9 +232,9 @@ public final class ElasticAppender extends AbstractAppender {
     @Override
     public String toString() {
         return "ElasticAppender{" +
-            "name=" + getName() +
-            ", state=" + getState() +
-            '}';
+                "name=" + getName() +
+                ", state=" + getState() +
+                '}';
     }
 }
 
