@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 public class ElasticAppenderTest {
 
 
-    //@Test
+    @Test
     public void testSomeLoggingMessages() {
         Logger logger = LogManager.getLogger(ElasticAppenderTest.class.getName());
         logger.debug("this is a message from me, world!");
