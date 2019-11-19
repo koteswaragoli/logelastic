@@ -83,7 +83,6 @@ public final class ElasticAppender extends AbstractAppender {
 
         @Override
         public ElasticAppender build() {
-            System.out.println("Plugin URL: " + url);
             url = new StrSubstitutor(System.getProperties()).replace(url).toLowerCase();
 
             try {
