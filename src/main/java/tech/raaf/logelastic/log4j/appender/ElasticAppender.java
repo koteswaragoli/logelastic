@@ -37,6 +37,7 @@ import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -55,13 +56,17 @@ public final class ElasticAppender extends AbstractAppender {
             implements org.apache.logging.log4j.core.util.Builder<ElasticAppender> {
 
         private HttpManager httpManager = null;
+        private char[] allowedIndexFrequencyDelimiters = {'.', '_', '-'};
 
         @PluginBuilderAttribute
         @Required(message = "No URL provided for ElasticAppender")
         private String url;
 
         @PluginBuilderAttribute
-        private String indexFrequency;
+        private String indexFrequencyType;
+
+        @PluginBuilderAttribute
+        private char indexFrequencyDelimiter = '.';//default to period in Elasticsearch index names when configuration is bad
 
         @PluginBuilderAttribute
         private int connectTimeoutMillis = 1000;
@@ -86,31 +91,47 @@ public final class ElasticAppender extends AbstractAppender {
             url = new StrSubstitutor(System.getProperties()).replace(url).toLowerCase();
 
             try {
+                //System.out.println(this.appendDelimiterToIndexFrequencyType(translateIndexFrequencyType(indexFrequencyType)));
+                System.out.println("ElasticSearch Index Name URL: " + url + this.appendDelimiterToIndexFrequencyType(translateIndexFrequencyType(indexFrequencyType)) + "/_doc");
                 httpManager = new HttpManager(getConfiguration(),
-                        getName(), new URL(url), new URL(url + translateIndexFrequency(indexFrequency) + "/_doc"), connectTimeoutMillis, readTimeoutMillis, headers, properties, sslConfiguration, verifyHostname);
+                        getName(), new URL(url), new URL(url + this.appendDelimiterToIndexFrequencyType(translateIndexFrequencyType(indexFrequencyType)) + "/_doc"), connectTimeoutMillis, readTimeoutMillis, headers, properties, sslConfiguration, verifyHostname);
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
             return new ElasticAppender(getName(), getLayout(), getFilter(), isIgnoreExceptions(), httpManager);
         }
 
-        private String translateIndexFrequency(String indexFrequency) {
+        private String appendDelimiterToIndexFrequencyType(String translatedFrequencyType) {
+            if (translatedFrequencyType == null || translatedFrequencyType.trim().equals(""))
+                return translatedFrequencyType;
+            else { //elastic log4j is configured..lets make sure the delimiter is one of the allowed one otherwise, replace it with default
+                //System.out.println("indexFrequencyDelimiter is: "+indexFrequencyDelimiter);
+                Arrays.sort(allowedIndexFrequencyDelimiters);//sort before search...
+                //System.out.printf("Modified arr[] : %s",Arrays.toString(allowedIndexFrequencyDelimiters));
+                if (Arrays.binarySearch(allowedIndexFrequencyDelimiters, indexFrequencyDelimiter) < 0)
+                    return new StringBuilder().append(allowedIndexFrequencyDelimiters[1]).append(translatedFrequencyType).toString();
+                else //when indexFrequencyType is valid and default indexDelimiter is used..we must append default
+                    return new StringBuilder().append(indexFrequencyDelimiter).append(translatedFrequencyType).toString();
+            }
+        }
 
-            if (indexFrequency == null || indexFrequency.trim().isEmpty())
+        private String translateIndexFrequencyType(String indexFrequencyType) {
+
+            if (indexFrequencyType == null || indexFrequencyType.trim().isEmpty())
                 return "";
 
-            if (indexFrequency.equalsIgnoreCase(IndexFrequency.NONE.toString()))
+            if (indexFrequencyType.equalsIgnoreCase(IndexFrequencyType.NONE.toString()))
                 return "";//default to empty
             LocalDateTime localDateTime = LocalDateTime.now(); //This is java 8..so is this okay as it wont by backward compatible with Java 7?
-            if (indexFrequency.equalsIgnoreCase(IndexFrequency.MINUTE.toString()))
+            if (indexFrequencyType.equalsIgnoreCase(IndexFrequencyType.MINUTE.toString()))
                 return new StringBuilder().append(localDateTime.getYear()).append(localDateTime.getMonthValue()).append(localDateTime.getDayOfMonth()).append(localDateTime.getHour()).append(localDateTime.getMinute()).toString(); //generate YYYYMMDDhhmm
-            if (indexFrequency.equalsIgnoreCase(IndexFrequency.HOUR.toString()))
+            if (indexFrequencyType.equalsIgnoreCase(IndexFrequencyType.HOUR.toString()))
                 return new StringBuilder().append(localDateTime.getYear()).append(localDateTime.getMonthValue()).append(localDateTime.getDayOfMonth()).append(localDateTime.getHour()).toString();// generate YYYYMMDDhh
-            if (indexFrequency.equalsIgnoreCase(IndexFrequency.DAY.toString()))
+            if (indexFrequencyType.equalsIgnoreCase(IndexFrequencyType.DAY.toString()))
                 return new StringBuilder().append(localDateTime.getYear()).append(localDateTime.getMonthValue()).append(localDateTime.getDayOfMonth()).toString(); // generate YYYYMMDD
-            if (indexFrequency.equalsIgnoreCase(IndexFrequency.MONTH.toString()))
+            if (indexFrequencyType.equalsIgnoreCase(IndexFrequencyType.MONTH.toString()))
                 return new StringBuilder().append(localDateTime.getYear()).append(localDateTime.getMonthValue()).toString(); // generate YYYYMM
-            if (indexFrequency.equalsIgnoreCase(IndexFrequency.YEAR.toString()))
+            if (indexFrequencyType.equalsIgnoreCase(IndexFrequencyType.YEAR.toString()))
                 return new StringBuilder().append(localDateTime.getYear()).toString(); // generate YYYY
             return "";
         }
@@ -143,8 +164,12 @@ public final class ElasticAppender extends AbstractAppender {
             return verifyHostname;
         }
 
-        public String getIndexFrequency() {
-            return indexFrequency;
+        public String getIndexFrequencyType() {
+            return indexFrequencyType;
+        }
+
+        public char getIndexFrequencyDelimiter() {
+            return indexFrequencyDelimiter;
         }
 
         public B setUrl(final String url) {
@@ -182,8 +207,13 @@ public final class ElasticAppender extends AbstractAppender {
             return asBuilder();
         }
 
-        public B setIndexFrequency(final String indexFrequency) {
-            this.indexFrequency = indexFrequency;
+        public B setIndexFrequencyType(final String indexFrequencyType) {
+            this.indexFrequencyType = indexFrequencyType;
+            return asBuilder();
+        }
+
+        public B setIndexFrequencyDelimiter(final char indexFrequencyDelimiter) {
+            this.indexFrequencyDelimiter = indexFrequencyDelimiter;
             return asBuilder();
         }
     }
@@ -237,7 +267,7 @@ public final class ElasticAppender extends AbstractAppender {
     }
 }
 
-enum IndexFrequency {
+enum IndexFrequencyType {
     NONE, MINUTE, HOUR, DAY, MONTH, YEAR;
 
     @Override
