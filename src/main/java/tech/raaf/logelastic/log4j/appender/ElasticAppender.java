@@ -97,7 +97,7 @@ public final class ElasticAppender extends AbstractAppender {
             url = new StrSubstitutor(System.getProperties()).replace(url).toLowerCase();
 
             try {
-                //System.out.println(this.appendDelimiterToIndexFrequencyType(translateIndexFrequencyType(indexFrequencyType)));
+                //is there a way to use LOGGER here instead of sysout?
                 System.out.println("ElasticSearch Index Name URL: " + url + this.appendDelimiterToIndexFrequencyType(translateIndexFrequencyType(indexFrequencyType)) + "/_doc");
                 httpManager = new HttpManager(getConfiguration(),
                         getName(), new URL(url), new URL(url + this.appendDelimiterToIndexFrequencyType(translateIndexFrequencyType(indexFrequencyType)) + "/_doc"), connectTimeoutMillis, readTimeoutMillis, headers, properties, sslConfiguration, verifyHostname);
@@ -112,7 +112,7 @@ public final class ElasticAppender extends AbstractAppender {
                 return translatedFrequencyType;
             else { //elastic log4j is configured..lets make sure the delimiter is one of the allowed one otherwise, replace it with default when override is set
                 Matcher matcher = restrictedDelimitersPattern.matcher(new Character(indexFrequencyDelimiter).toString());
-                //System.out.printf("Modified arr[] : %s",Arrays.toString(allowedIndexFrequencyDelimiters));
+
                 if (matcher.find() && isOverrideIndexFrequencyDelimiter())
                     return new StringBuilder().append('-').append(translatedFrequencyType).toString();
                 else //when override is set to false explicitly then let it go..

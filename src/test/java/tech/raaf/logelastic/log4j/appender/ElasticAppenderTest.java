@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 public class ElasticAppenderTest {
 
 
-    //@Test
+    @Test
     public void testSomeLoggingMessages() {
         Logger logger = LogManager.getLogger(ElasticAppenderTest.class.getName());
         logger.debug("this is a message from me, world!");
@@ -31,18 +31,16 @@ public class ElasticAppenderTest {
     }
 
 
-
     @Test
-    public void testIndexFrequency () {
-        //System.out.println(IndexFrequency.valueOf(""));
-        //System.out.println(IndexFrequency.valueOf("HOURLY"));
+    public void testIndexFrequency() {
+
         System.out.println(IndexFrequencyType.valueOf("YEAR"));
         System.out.println(IndexFrequencyType.MINUTE.toString());
     }
 
     private static void doWait(int seconds) {
         try {
-            Thread.sleep(seconds  * 1000);
+            Thread.sleep(seconds * 1000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
