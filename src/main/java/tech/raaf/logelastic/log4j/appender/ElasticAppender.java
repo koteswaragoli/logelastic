@@ -40,6 +40,8 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Sends log events over HTTP to Elasticsearch.
@@ -57,6 +59,7 @@ public final class ElasticAppender extends AbstractAppender {
 
         private HttpManager httpManager = null;
         private char[] allowedIndexFrequencyDelimiters = {'.', '_', '-'};
+        private Pattern restrictedDelimitersPattern = Pattern.compile("[\\/*?,<>|\"#\\s:]");
 
         @PluginBuilderAttribute
         @Required(message = "No URL provided for ElasticAppender")
@@ -66,7 +69,10 @@ public final class ElasticAppender extends AbstractAppender {
         private String indexFrequencyType;
 
         @PluginBuilderAttribute
-        private char indexFrequencyDelimiter = '.';//default to period in Elasticsearch index names when configuration is bad
+        private char indexFrequencyDelimiter = '-';//default to dash in Elasticsearch index names when configuration is bad - like if they specified as abcd or delimit-me even though it is character type
+
+        @PluginBuilderAttribute
+        private boolean overrideIndexFrequencyDelimiter = true;
 
         @PluginBuilderAttribute
         private int connectTimeoutMillis = 1000;
@@ -102,15 +108,14 @@ public final class ElasticAppender extends AbstractAppender {
         }
 
         private String appendDelimiterToIndexFrequencyType(String translatedFrequencyType) {
-            if (translatedFrequencyType == null || translatedFrequencyType.trim().equals(""))
+            if (translatedFrequencyType == null || translatedFrequencyType.trim().isEmpty())
                 return translatedFrequencyType;
-            else { //elastic log4j is configured..lets make sure the delimiter is one of the allowed one otherwise, replace it with default
-                //System.out.println("indexFrequencyDelimiter is: "+indexFrequencyDelimiter);
-                Arrays.sort(allowedIndexFrequencyDelimiters);//sort before search...
+            else { //elastic log4j is configured..lets make sure the delimiter is one of the allowed one otherwise, replace it with default when override is set
+                Matcher matcher = restrictedDelimitersPattern.matcher(new Character(indexFrequencyDelimiter).toString());
                 //System.out.printf("Modified arr[] : %s",Arrays.toString(allowedIndexFrequencyDelimiters));
-                if (Arrays.binarySearch(allowedIndexFrequencyDelimiters, indexFrequencyDelimiter) < 0)
-                    return new StringBuilder().append(allowedIndexFrequencyDelimiters[1]).append(translatedFrequencyType).toString();
-                else //when indexFrequencyType is valid and default indexDelimiter is used..we must append default
+                if (matcher.find() && isOverrideIndexFrequencyDelimiter())
+                    return new StringBuilder().append('-').append(translatedFrequencyType).toString();
+                else //when override is set to false explicitly then let it go..
                     return new StringBuilder().append(indexFrequencyDelimiter).append(translatedFrequencyType).toString();
             }
         }
@@ -172,6 +177,10 @@ public final class ElasticAppender extends AbstractAppender {
             return indexFrequencyDelimiter;
         }
 
+        public boolean isOverrideIndexFrequencyDelimiter() {
+            return overrideIndexFrequencyDelimiter;
+        }
+
         public B setUrl(final String url) {
             this.url = url;
             return asBuilder();
@@ -214,6 +223,11 @@ public final class ElasticAppender extends AbstractAppender {
 
         public B setIndexFrequencyDelimiter(final char indexFrequencyDelimiter) {
             this.indexFrequencyDelimiter = indexFrequencyDelimiter;
+            return asBuilder();
+        }
+
+        public B setOverrideIndexFrequencyDelimiter(final boolean overrideIndexFrequencyDelimiter) {
+            this.overrideIndexFrequencyDelimiter = overrideIndexFrequencyDelimiter;
             return asBuilder();
         }
     }
