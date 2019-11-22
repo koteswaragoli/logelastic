@@ -31,18 +31,16 @@ public class ElasticAppenderTest {
     }
 
 
-
     @Test
-    public void testIndexFrequency () {
-        //System.out.println(IndexFrequency.valueOf(""));
-        //System.out.println(IndexFrequency.valueOf("HOURLY"));
-        System.out.println(IndexFrequency.valueOf("YEAR"));
-        System.out.println(IndexFrequency.MINUTE.toString());
+    public void testIndexFrequency() {
+
+        System.out.println(IndexFrequencyType.valueOf("YEAR"));
+        System.out.println(IndexFrequencyType.MINUTE.toString());
     }
 
     private static void doWait(int seconds) {
         try {
-            Thread.sleep(seconds  * 1000);
+            Thread.sleep(seconds * 1000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
